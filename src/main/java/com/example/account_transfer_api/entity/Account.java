@@ -23,6 +23,6 @@ public class Account {
     private String name;
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance;
-    @Column(nullable = false, precision = 19, length = 3)
+    @Column(nullable = false, length = 3)
     private String currency;
 }
