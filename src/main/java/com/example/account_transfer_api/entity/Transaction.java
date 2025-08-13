@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -27,13 +26,15 @@ public class Transaction {
     @Column(nullable = false)
     private UUID toAccountId;
     @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal transactionAmount;
+    private BigDecimal amountDebited; // Amount taken from the source account
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amountCredited; // Amount added to the destination account
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal transactionFee;
     @Column(nullable = false, length = 3)
-    private String currencyFrom;
+    private String fromCurrency;
     @Column(nullable = false, length = 3)
-    private String currencyTo;
+    private String toCurrency;
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
     private Instant createdAt = Instant.now();

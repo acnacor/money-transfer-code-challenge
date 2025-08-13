@@ -17,7 +17,11 @@ import java.util.UUID;
 public class TransferResponse {
     private UUID transactionId;
     private TransactionStatus status;
+    private String message;
+    private BigDecimal amountDebited;
     private BigDecimal amountCredited;
     private BigDecimal fee;
+    private String fromCurrency;
+    private String toCurrency;
     private Instant timestamp;
 }
