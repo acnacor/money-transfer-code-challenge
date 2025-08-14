@@ -25,7 +25,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TransferApiIntegrationTest {
+public class TransferAPIIT {
 
     @LocalServerPort
     private int port;
@@ -44,8 +44,6 @@ public class TransferApiIntegrationTest {
     @BeforeEach
     void setup() {
         RestAssured.port = port;
-
-        // Reset DB to seeded accounts
         transactionRepository.deleteAll();
         accountRepository.deleteAll();
 
@@ -62,31 +60,6 @@ public class TransferApiIntegrationTest {
                 .balance(new BigDecimal("500.00"))
                 .currency("AUD")
                 .build());
-    }
-
-    private TransferResponse doTransfer(UUID from, UUID to, BigDecimal amount) {
-        return given()
-                .contentType(ContentType.JSON)
-                .body(new TransferRequest(from, to, amount))
-                .when()
-                .post("/api/transfers")
-                .then()
-                .statusCode(200)
-                .extract()
-                .as(TransferResponse.class);
-    }
-
-    private BigDecimal getBalance(UUID accountId) {
-        String balanceStr = given()
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/api/accounts/{id}", accountId)
-                .then()
-                .statusCode(200)
-                .extract()
-                .jsonPath()
-                .getString("balance");
-        return new BigDecimal(balanceStr);
     }
 
     @Test
@@ -232,5 +205,30 @@ public class TransferApiIntegrationTest {
          * Each account has only one base currency, so transferring 40 CNY from Alice's USD account
          * is invalid and cannot be executed.
          */
+    }
+
+    private TransferResponse doTransfer(UUID from, UUID to, BigDecimal amount) {
+        return given()
+                .contentType(ContentType.JSON)
+                .body(new TransferRequest(from, to, amount))
+                .when()
+                .post("/api/transfers")
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(TransferResponse.class);
+    }
+
+    private BigDecimal getBalance(UUID accountId) {
+        String balanceStr = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/accounts/{id}", accountId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getString("balance");
+        return new BigDecimal(balanceStr);
     }
 }
