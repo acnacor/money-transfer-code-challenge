@@ -18,12 +18,10 @@ The system is implemented using **Spring Boot**, **JPA/Hibernate**, and **H2 in-
 ---
 
 ## Preseeded Data
-All preloaded accounts and FX rates are included in the project files:
+All preloaded accounts and FX rates are included in the project files under resources
 
 - `schema.sql` – Defines tables and constraints.
 - `data.sql` – Seeds accounts and FX rates for testing.
-
-> These files will be included in the ZIP submission.
 
 ---
 
@@ -31,7 +29,7 @@ All preloaded accounts and FX rates are included in the project files:
 
 - A **1% transfer fee** is applied to the sender's account on every transfer.
 - Transfers **require a valid FX rate** for currency conversion; otherwise an error is thrown.
-- **Bob’s currency is AUD** (not JPY) — corrected from the original problem statement typo.
+- **Bob’s currency is AUD** (not JPY) — corrected from the original problem statement.
 - Transfers **cannot exceed the sender’s balance** including fees. Insufficient funds result in an error.
 - Each account has a **single base currency**. Cross currency transfers must use FX conversion.
 
@@ -42,7 +40,7 @@ All preloaded accounts and FX rates are included in the project files:
 Multiple simultaneous transfers are safely handled using **database transactions and row-level locking**:
 
 - **Transactional Operations:** Each transfer runs inside a Spring `@Transactional` method to ensure atomicity.
-- **Row-Level Locking:** The sender’s and receiver’s account rows are locked during the transaction to prevent concurrent modifications that could cause overdrafts or inconsistent balances.
+- **Row Level Locking:** The sender’s and receiver’s account rows are locked during the transaction to prevent concurrent modifications that could cause overdrafts or inconsistent balances.
 
 ---
 
