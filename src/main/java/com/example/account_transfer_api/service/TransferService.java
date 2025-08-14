@@ -46,7 +46,6 @@ public class TransferService {
             throw new IllegalStateException("Source account and Destination account are the same.");
         }
 
-
         BigDecimal amountToTransfer = request.getAmount().setScale(2, RoundingMode.HALF_UP);
 
         // Convert currency

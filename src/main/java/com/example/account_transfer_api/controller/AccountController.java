@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -20,6 +21,11 @@ public class AccountController {
     @PostMapping
     public AccountDTO createAccount(@RequestBody AccountDTO accountDTO) {
         return accountService.createAccount(accountDTO);
+    }
+
+    @GetMapping("/{id}")
+    public AccountDTO getAccountById(@PathVariable UUID id) {
+        return accountService.getAccountById(id);
     }
 
     @GetMapping
