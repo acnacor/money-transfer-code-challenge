@@ -1,7 +1,7 @@
 # Account Transfer API
 
 ## Project Summary
-This project provides a **RESTful API for transferring money between accounts** in different currencies. It handles **transfer fees**, **foreign exchange (FX) conversions**, and **concurrent transactions**, ensuring accurate balance updates and transaction logging.
+This project provides a Java 21 **RESTful API for transferring money between accounts** in different currencies. It handles **transfer fees**, **foreign exchange (FX) conversions**, and **concurrent transactions**, ensuring accurate balance updates and transaction logging.
 
 The system is implemented using **Spring Boot**, **JPA/Hibernate**, and **H2 in-memory database** for integration testing. All integration tests are self-contained and reproducible with `mvn clean install`.
 
