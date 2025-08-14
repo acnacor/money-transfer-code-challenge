@@ -50,6 +50,17 @@ Multiple simultaneous transfers are safely handled using **database transactions
 
 1. Extract the ZIP file to a folder on your machine.
 2. Open a terminal and navigate to the extracted project folder.
+
+OR
+
+1. Clone the Project Repository
+
+   git clone https://github.com/acnacor/money-transfer-code-challenge.git
+
+2. cd money-transfer-code-challenge
+
+------------------------------------------------
+
 3. Build the project using Maven:
 
    mvn clean install
