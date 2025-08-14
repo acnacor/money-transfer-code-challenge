@@ -9,22 +9,19 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "fx_rate")
+@Table(name = "fx_rates")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class FxRate {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(nullable = false, length = 3)
     private String fromCurrency;
-
     @Column(nullable = false, length = 3)
     private String toCurrency;
-
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(nullable = false, precision = 19, scale = 6)
     private BigDecimal rate;
 }

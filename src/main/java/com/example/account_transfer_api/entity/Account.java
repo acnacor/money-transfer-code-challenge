@@ -17,7 +17,6 @@ import java.util.UUID;
 @Builder
 public class Account {
     @Id
-    @GeneratedValue
     private UUID id;
     @Column(nullable = false)
     private String name;
@@ -26,3 +25,4 @@ public class Account {
     @Column(nullable = false, length = 3)
     private String currency;
 }
+

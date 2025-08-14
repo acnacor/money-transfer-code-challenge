@@ -7,11 +7,13 @@ import com.example.account_transfer_api.entity.Transaction;
 import com.example.account_transfer_api.enums.TransactionStatus;
 import com.example.account_transfer_api.repository.AccountRepository;
 import com.example.account_transfer_api.repository.TransactionRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 
 @Service
 @Slf4j
@@ -32,13 +34,18 @@ public class TransferService {
         this.feeConfigService = feeConfigService;
     }
 
+    @Transactional
     public TransferResponse transferMoney(TransferRequest request) {
 
-        // Lookup accounts
-        Account fromAccount = accountRepository.findById(request.getFromAccountId())
+        Account fromAccount = accountRepository.findByIdWithLock(request.getFromAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
-        Account toAccount = accountRepository.findById(request.getToAccountId())
+        Account toAccount = accountRepository.findByIdWithLock(request.getToAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Destination account not found"));
+
+        if(fromAccount.getId().equals(toAccount.getId())) {
+            throw new IllegalStateException("Source account and Destination account are the same.");
+        }
+
 
         BigDecimal amountToTransfer = request.getAmount().setScale(2, RoundingMode.HALF_UP);
 
@@ -73,8 +80,7 @@ public class TransferService {
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
 
-        // Save transaction
-        Transaction transaction = Transaction.builder()
+        Transaction transaction =  Transaction.builder()
                 .fromAccountId(fromAccount.getId())
                 .toAccountId(toAccount.getId())
                 .amountDebited(amountToTransfer)
@@ -82,19 +88,22 @@ public class TransferService {
                 .fromCurrency(fromAccount.getCurrency())
                 .toCurrency(toAccount.getCurrency())
                 .transactionFee(fee)
-                .status(TransactionStatus.SUCCESS)
+                .status(TransactionStatus.SUCCESS.name())
                 .build();
 
         transactionRepository.save(transaction);
+
 
         return TransferResponse.builder()
                 .transactionId(transaction.getId())
                 .status(TransactionStatus.SUCCESS)
                 .message("Successful transfer")
-                .amountDebited(amountToTransfer)
-                .fromCurrency(fromAccount.getCurrency())
-                .toCurrency(toAccount.getCurrency())
-                .fee(fee)
+                .amountDebited(transaction.getAmountDebited())
+                .amountCredited(transaction.getAmountCredited())
+                .fee(transaction.getTransactionFee())
+                .fromCurrency(transaction.getFromCurrency())
+                .toCurrency(transaction.getToCurrency())
+                .timestamp(Instant.now())
                 .build();
     }
 

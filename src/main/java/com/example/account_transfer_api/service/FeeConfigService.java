@@ -19,7 +19,7 @@ public class FeeConfigService {
         return feeConfigRepository.findAll()
                 .stream()
                 .findFirst()
-                .map(FeeConfig::getFeePercentage)
+                .map(FeeConfig::getGlobalFeePercentage)
                 .orElse(BigDecimal.valueOf(0.01)); // default 1% if none configured
     }
 }

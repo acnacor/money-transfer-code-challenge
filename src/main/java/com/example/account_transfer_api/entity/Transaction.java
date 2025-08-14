@@ -26,16 +26,15 @@ public class Transaction {
     @Column(nullable = false)
     private UUID toAccountId;
     @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amountDebited; // Amount taken from the source account
+    private BigDecimal amountDebited;
     @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amountCredited; // Amount added to the destination account
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal transactionFee;
+    private BigDecimal amountCredited;
     @Column(nullable = false, length = 3)
     private String fromCurrency;
     @Column(nullable = false, length = 3)
     private String toCurrency;
-    @Enumerated(EnumType.STRING)
-    private TransactionStatus status;
-    private Instant createdAt = Instant.now();
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal transactionFee;
+    @Column(nullable = false)
+    private String status;
 }

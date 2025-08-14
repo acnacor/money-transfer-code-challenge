@@ -16,11 +16,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class FeeConfig {
-
     @Id
-    @GeneratedValue()
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(nullable = false, precision = 5, scale = 4)
-    private BigDecimal feePercentage; // e.g. 0.01 = 1%
+    private BigDecimal globalFeePercentage;
 }

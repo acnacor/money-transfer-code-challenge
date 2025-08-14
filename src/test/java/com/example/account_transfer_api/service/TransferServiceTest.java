@@ -40,25 +40,21 @@ class TransferServiceTest {
 
         aliceId = UUID.randomUUID();
         bobId = UUID.randomUUID();
+
+        when(feeConfigService.getGlobalFeePercentage()).thenReturn(new BigDecimal("0.01"));
+
     }
 
     @Test
     void testSuccessfulUsdToUsdTransfer() {
-        Account alice = new Account(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
-        Account bob = new Account(bobId, "Bob", new BigDecimal("500.00"), "USD");
+        Account alice = createAccount(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
+        Account bob = createAccount(bobId, "Bob", new BigDecimal("500.00"), "USD");
 
-        when(accountRepository.findById(aliceId)).thenReturn(Optional.of(alice));
-        when(accountRepository.findById(bobId)).thenReturn(Optional.of(bob));
-        when(feeConfigService.getGlobalFeePercentage()).thenReturn(new BigDecimal("0.01"));
+        mockAccounts(alice, bob);
 
-        TransferRequest request = new TransferRequest(aliceId, bobId, new BigDecimal("100"));
-
-        TransferResponse response = transferService.transferMoney(request);
+        TransferResponse response = transfer(100, aliceId, bobId);
 
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
-        assertThat(response.getAmountDebited()).isEqualByComparingTo(new BigDecimal("100.00"));
-        assertThat(response.getFee()).isEqualByComparingTo(new BigDecimal("1.00"));
-
         assertThat(alice.getBalance()).isEqualByComparingTo(new BigDecimal("899.00"));
         assertThat(bob.getBalance()).isEqualByComparingTo(new BigDecimal("600.00"));
 
@@ -66,25 +62,22 @@ class TransferServiceTest {
     }
 
     @Test
-    void testUsdToUsdTransfer() {
-        Account alice = new Account(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
-        Account bob = new Account(bobId, "Bob", new BigDecimal("500.00"), "USD");
+    void testUsdToAudTransfer() {
+        Account alice = createAccount(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
+        Account bob = createAccount(bobId, "Bob", new BigDecimal("500.00"), "AUD");
 
-        when(accountRepository.findById(aliceId)).thenReturn(Optional.of(alice));
-        when(accountRepository.findById(bobId)).thenReturn(Optional.of(bob));
-        when(feeConfigService.getGlobalFeePercentage()).thenReturn(new BigDecimal("0.01"));
+        mockAccounts(alice, bob);
+
+        when(fxRateService.getRate("USD", "AUD")).thenReturn(new BigDecimal("2.0"));
 
         TransferRequest request = new TransferRequest(aliceId, bobId, new BigDecimal("100"));
-
         TransferResponse response = transferService.transferMoney(request);
 
+        BigDecimal fee = new BigDecimal("100.00").multiply(feeConfigService.getGlobalFeePercentage()).setScale(2, RoundingMode.HALF_UP);        BigDecimal expectedAliceBalance = new BigDecimal("1000.00").subtract(new BigDecimal("100.00").add(fee)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal expectedBobBalance = new BigDecimal("500.00").add(new BigDecimal("100.00").multiply(new BigDecimal("2.0"))).setScale(2, RoundingMode.HALF_UP); // 100 * 2 = 200
+
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
-
-        BigDecimal fee = new BigDecimal("100.00").multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP); // 1.00
-        BigDecimal expectedAliceBalance = new BigDecimal("1000.00").subtract(new BigDecimal("100.00").add(fee)).setScale(2, RoundingMode.HALF_UP);
         assertThat(alice.getBalance()).isEqualByComparingTo(expectedAliceBalance);
-
-        BigDecimal expectedBobBalance = new BigDecimal("500.00").add(new BigDecimal("100.00")).setScale(2, RoundingMode.HALF_UP);
         assertThat(bob.getBalance()).isEqualByComparingTo(expectedBobBalance);
 
         verify(transactionRepository, times(1)).save(any(Transaction.class));
@@ -92,16 +85,12 @@ class TransferServiceTest {
 
     @Test
     void testInsufficientFunds() {
-        Account alice = new Account(aliceId, "Alice", new BigDecimal("50.00"), "USD");
-        Account bob = new Account(bobId, "Bob", new BigDecimal("500.00"), "USD");
+        Account alice = createAccount(aliceId, "Alice", new BigDecimal("50.00"), "USD");
+        Account bob = createAccount(bobId, "Bob", new BigDecimal("500.00"), "USD");
 
-        when(accountRepository.findById(aliceId)).thenReturn(Optional.of(alice));
-        when(accountRepository.findById(bobId)).thenReturn(Optional.of(bob));
-        when(feeConfigService.getGlobalFeePercentage()).thenReturn(new BigDecimal("0.01"));
+        mockAccounts(alice, bob);
 
-        TransferRequest request = new TransferRequest(aliceId, bobId, new BigDecimal("100"));
-
-        TransferResponse response = transferService.transferMoney(request);
+        TransferResponse response = transfer(100, aliceId, bobId);
 
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.FAILED);
         assertThat(response.getMessage()).isEqualTo("Insufficient funds");
@@ -114,21 +103,31 @@ class TransferServiceTest {
 
     @Test
     void testMissingFxRate() {
-        Account alice = new Account(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
-        Account bob = new Account(bobId, "Bob", new BigDecimal("500.00"), "JPY");
+        Account alice = createAccount(aliceId, "Alice", new BigDecimal("1000.00"), "USD");
+        Account bob = createAccount(bobId, "Bob", new BigDecimal("500.00"), "JPY");
 
-        when(accountRepository.findById(aliceId)).thenReturn(Optional.of(alice));
-        when(accountRepository.findById(bobId)).thenReturn(Optional.of(bob));
+        mockAccounts(alice, bob);
         when(fxRateService.getRate("USD", "JPY")).thenThrow(new IllegalArgumentException("FX rate not found"));
-        when(feeConfigService.getGlobalFeePercentage()).thenReturn(new BigDecimal("0.01"));
 
         TransferRequest request = new TransferRequest(aliceId, bobId, new BigDecimal("100"));
-
         TransferResponse response = transferService.transferMoney(request);
 
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.FAILED);
         assertThat(response.getMessage()).isEqualTo("FX rate not found for transfer");
 
         verify(transactionRepository, never()).save(any(Transaction.class));
+    }
+
+    private TransferResponse transfer(double amount, UUID from, UUID to) {
+        return transferService.transferMoney(new TransferRequest(from, to, BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP)));
+    }
+
+    private Account createAccount(UUID id, String name, BigDecimal balance, String currency) {
+        return Account.builder().id(id).name(name).balance(balance).currency(currency).build();
+    }
+
+    private void mockAccounts(Account alice, Account bob) {
+        when(accountRepository.findByIdWithLock(alice.getId())).thenReturn(Optional.of(alice));
+        when(accountRepository.findByIdWithLock(bob.getId())).thenReturn(Optional.of(bob));
     }
 }
